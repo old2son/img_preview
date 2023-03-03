@@ -29,6 +29,26 @@ const PreviewImg = (function () {
 			: '';
 	}
 
+    function getPointersCenter(pointers) {
+        var pageX = 0;
+        var pageY = 0;
+        var count = 0;
+        [].forEach.call(pointers, function (_ref3) {
+            var startX = _ref3.startX,
+                startY = _ref3.startY;
+                pageX += startX;
+                pageY += startY;
+                count += 1;
+        });
+        pageX /= count;
+        pageY /= count;
+
+        return {
+            pageX: pageX,
+            pageY: pageY
+        };
+    }
+
 	function isFunction(value) {
 		return typeof value === 'function';
 	}
@@ -101,7 +121,7 @@ const PreviewImg = (function () {
                 that.close();
             }
 
-            that.$wrap.onclick = function (event) {
+            that.$wrap.onclick = function () {
                 that.close();
             }
 
@@ -110,12 +130,12 @@ const PreviewImg = (function () {
             }
         },
 		initCanvas: function initCanvas() {
-            let that = this;
-            this.$img = document.createElement('img');
             let $canvas = this.$wrap.querySelector('.view-canvas');
-			fragment.appendChild(this.$img);
+            this.$img = document.createElement('img');
+            // this.$img.style.transformOrigin = '50% 1%';
+            fragment.appendChild(this.$img);
 			$canvas.appendChild(fragment);
-            that.dragorclick();
+            this.dragorclick();
         },
 		initList: function initList() {
             let that = this;
@@ -133,85 +153,73 @@ const PreviewImg = (function () {
     const methods = {
         dragorclick: function dragorclick() {
             let that = this;
-            let pos = {
+            let handDetail = {
                 startX: 0,
                 startY: 0,
-                moveEndX: 0,
-                moveEndY: 0,
+                imgEndX: 0,
+                imgEndY: 0,
                 startTime: 0,
                 endTime: 0,
+                spaceTime: 0,
                 distanceX: 0,
                 distanceY: 0,
-                imgX: 0,
-                imgY: 0,
                 timer: null,
-                isRecord: false
             }
-            const darg = new CustomEvent('darg');
 
             that.$img.onclick = function (event) {
                 event.stopPropagation();
-                clearTimeout(pos.timer);
-                pos.timer = setTimeout(function () {
+                clearTimeout(handDetail.timer);
+                handDetail.timer = setTimeout(function () {
                     that.close();
                 }, 250);
             }
 
             that.$img.ondblclick = function (event) {
                 event.stopPropagation();
-                clearTimeout(pos.timer);
+                clearTimeout(handDetail.timer);
             }
 
-            that.$img.addEventListener('darg', () => {
-                
-                that.$img.ontouchstart = function (event) {
-                    // event.preventDefault();
-                    // event.stopPropagation();
+            that.$img.ontouchstart = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                handDetail.startX = event.touches[0].pageX;
+                handDetail.startY = event.touches[0].pageY;
+                handDetail.startTime = Date.now();
+            }
 
-                    console.log(111)
-                    
-                    pos.startTime = new Date().getTime();
-                    pos.startX = event.touches[0].pageX;
-                    pos.startY = event.touches[0].pageY;
+            that.$img.ontouchmove = function (event) {
+                clearTimeout(handDetail.timer);
+                handDetail.distanceX = event.touches[0].pageX - handDetail.startX;
+                handDetail.distanceY = event.touches[0].pageY - handDetail.startY;
+
+                console.log(handDetail.imgEndX, handDetail.distanceX)
+
+                that.$img.style.transform = `translate(${handDetail.imgEndX + handDetail.distanceX}px, ${handDetail.imgEndY + handDetail.distanceY}px)`;
+            }
+
+            that.$img.ontouchend = function (event) {
+                handDetail.imgEndX = event.changedTouches[0].pageX + handDetail.distanceX;
+                handDetail.imgEndY = event.changedTouches[0].pageY + handDetail.distanceY;
+                handDetail.spaceTime = Date.now() - handDetail.endTime;
+                handDetail.endTime = Date.now();
+                clearTimeout(handDetail.timer);
+                handDetail.timer = setTimeout(function () {
+                    that.close();
+                }, 250);
+
+                // 双击
+                if (handDetail.spaceTime > 0 && handDetail.spaceTime <= 250) {
+                    clearTimeout(handDetail.timer);
                 }
-    
-                that.$img.ontouchmove = function (event) {
-                    // event.preventDefault();
-                    // event.stopPropagation();
-
-                    pos.distanceX = event.touches[0].pageX - pos.startX;
-                    pos.distanceY = event.touches[0].pageY - pos.startY;
-    
-                    that.$img.style.transform = `translate(${pos.distanceX}px, ${pos.distanceY}px)`;
+                // 长按
+                else if (handDetail.endTime - handDetail.startTime >= 250) {
+                    clearTimeout(handDetail.timer);
                 }
-    
-                that.$img.ontouchend = function (event) {
-                    // event.preventDefault();
-                    // event.stopPropagation();
-
-                    pos.endTime = new Date().getTime();
-
-                    console.log(pos.endTime)
-                    console.log(pos.startTime)
-
-                    if (pos.endTime - pos.startTime  < 250) {
-                        pos.endTime = 0;
-                        pos.startTime  = 0;
-                        that.close();
-                    } 
-                }
-            });
-    
-            that.$img.addEventListener('touchstart', (event) => {
-                // event.preventDefault();
-                // event.stopPropagation();
-
-                if (event.target !== that.$img) {
-                    return;
-                }
-
-                that.$img.dispatchEvent(darg);
-            });
+            }
+        },
+        moveTo: function moveTo(event) {
+            handDetail.startX = event.touches[0].pageX;
+            handDetail.startY = event.touches[0].pageY;
         },
         open: function open() {
             document.body.classList.add('view-open');
@@ -220,7 +228,7 @@ const PreviewImg = (function () {
         close: function close() {
             document.body.classList.remove('view-open');
             this.$wrap.children[0].classList.add('hide');
-        }
+        },
     }
 
 	const others = {
