@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+<title>myView</title>
+<link href="https://img.familydoctor.com.cn/component/common/styles/common.wide.css" rel="stylesheet" type="text/css"/>
+<link  href="styles/myViewer.css" rel="stylesheet">
+<script src="https://img.familydoctor.com.cn/component/common/scripts/fd-base-mobile-2.0.min.js"></script>
+<script src="scripts/myViewer.js"></script>
+</head>
+
+<style>
+    #image li {
+        width: 100px;
+        overflow: hidden;
+    }
+
+    #image li img {
+        width: 100%;
+        cursor: pointer;
+    }
+</style>
+<body>
+    <div>
+        <ul id="image">
+            <li><img src="../images/tibet-1.jpg" alt="tibet-1"></li>
+            <li><img src="../images/tibet-2.jpg" alt="tibet-2"></li>
+            <li><img src="../images/tibet-3.jpg" alt="tibet-3"></li>
+            <li><img src="https://img.familydoctor.com.cn/uploadimg/cbyhys/2022/12/29/14/8c16435e850100001fab71641f760000.jpeg" alt="tibet-4"></li>
+        </ul>
+    </div>
+
+    <!-- <div class="view-container view-loading">
+        <div class="view-canvas">
+            <img src="https://img.familydoctor.com.cn/uploadimg/cbyhys/2022/12/29/14/8c16435e850100001fab71641f760000.jpeg" alt="">
+        </div>
+        <div class="view-footer">
+            <div class="view-title"><div>
+            <div class="view-tool"><div>
+            <div class="view-navbar"><div>
+        </div>
+    </div> -->
+
+    <script>
+        FD.domReady(function () {
+            const Preview = new PreviewImg({
+                element: '#image',
+            });
+            console.log(Preview);
+        });
+    </script>
+</body>
+</html>
