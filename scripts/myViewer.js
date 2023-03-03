@@ -3,10 +3,9 @@ const PreviewImg = (function () {
 		element: '#id',
 		toolbar: false,
 		container: '.js-view-container',
-		className: '',
 	};
 
-    let fragment = document.createDocumentFragment();
+    const fragment = document.createDocumentFragment();
 
 	const TEMPLATE =
 		`` +
@@ -20,45 +19,8 @@ const PreviewImg = (function () {
             <div class="js-close view-close">x</div>
         </div>`;
 
-	function getImageNameFromURL(url) {
-		// 获取图名
-		return Object.prototype.toString.call(url)
-			? decodeURIComponent(
-					url.replace(/^.*\//, '').replace(/[?&#].*$/, '')
-			  )
-			: '';
-	}
-
-    function getPointersCenter(pointers) {
-        var pageX = 0;
-        var pageY = 0;
-        var count = 0;
-        [].forEach.call(pointers, function (_ref3) {
-            var startX = _ref3.startX,
-                startY = _ref3.startY;
-                pageX += startX;
-                pageY += startY;
-                count += 1;
-        });
-        pageX /= count;
-        pageY /= count;
-
-        return {
-            pageX: pageX,
-            pageY: pageY
-        };
-    }
-
-	function isFunction(value) {
-		return typeof value === 'function';
-	}
-
 	function isObject(value) {
 		return typeof value === 'object' && value !== null;
-	}
-
-	function isString(value) {
-		return typeof value === 'string';
 	}
 
 	const assign =
@@ -130,17 +92,15 @@ const PreviewImg = (function () {
             }
         },
 		initCanvas: function initCanvas() {
-            let $canvas = this.$wrap.querySelector('.view-canvas');
             this.$img = document.createElement('img');
-            // this.$img.style.transformOrigin = '50% 1%';
+            this.$img.style.transform = 'translate(0, 0)';
             fragment.appendChild(this.$img);
-			$canvas.appendChild(fragment);
+			this.$wrap.children[0].children[0].appendChild(fragment);
             this.dragorclick();
         },
 		initList: function initList() {
             let that = this;
 			[].forEach.call(this.images, function (img) {
-				console.log(img);
                 img.onclick = function (event) {
                     event.stopPropagation();
                     that.open();
@@ -164,6 +124,7 @@ const PreviewImg = (function () {
                 distanceX: 0,
                 distanceY: 0,
                 timer: null,
+                isMove: false,
             }
 
             that.$img.onclick = function (event) {
@@ -189,23 +150,26 @@ const PreviewImg = (function () {
 
             that.$img.ontouchmove = function (event) {
                 clearTimeout(handDetail.timer);
+                handDetail.isMove = true;
                 handDetail.distanceX = event.touches[0].pageX - handDetail.startX;
                 handDetail.distanceY = event.touches[0].pageY - handDetail.startY;
-
-                console.log(handDetail.imgEndX, handDetail.distanceX)
-
                 that.$img.style.transform = `translate(${handDetail.imgEndX + handDetail.distanceX}px, ${handDetail.imgEndY + handDetail.distanceY}px)`;
             }
 
-            that.$img.ontouchend = function (event) {
-                handDetail.imgEndX = event.changedTouches[0].pageX + handDetail.distanceX;
-                handDetail.imgEndY = event.changedTouches[0].pageY + handDetail.distanceY;
+            that.$img.ontouchend = function () {
+                handDetail.imgEndX += handDetail.distanceX;
+                handDetail.imgEndY += handDetail.distanceY;
                 handDetail.spaceTime = Date.now() - handDetail.endTime;
                 handDetail.endTime = Date.now();
                 clearTimeout(handDetail.timer);
                 handDetail.timer = setTimeout(function () {
                     that.close();
                 }, 250);
+
+                if (handDetail.isMove) {
+                    handDetail.isMove = false;
+                    clearTimeout(handDetail.timer);
+                } 
 
                 // 双击
                 if (handDetail.spaceTime > 0 && handDetail.spaceTime <= 250) {
@@ -228,31 +192,14 @@ const PreviewImg = (function () {
         close: function close() {
             document.body.classList.remove('view-open');
             this.$wrap.children[0].classList.add('hide');
+            this.$img.style.transform = 'translate(0, 0)';
         },
     }
 
-	const others = {
-		getImageURL: function getImageURL(image) {
-			var url = this.options.url;
-			if (isString(url)) {
-				url = image.getAttribute(url);
-			} 
-            else if (isFunction(url)) {
-				url = url.call(this, image);
-			} 
-            else {
-				url = '';
-			}
-			return url;
-		},
-	};
-
 	Viewer.prototype.debug = function () {
-		console.error('没交水费');
+		console.error('debug');
 	};
 
-	assign(Viewer.prototype, render, methods, others);
+	assign(Viewer.prototype, render, methods);
 	return Viewer;
 })();
-
-
