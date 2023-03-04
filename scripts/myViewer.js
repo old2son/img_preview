@@ -1,5 +1,5 @@
 const PreviewImg = (function () {
-	let DEFAULTS = {
+	const DEFAULTS = {
 		element: '#id',
 		toolbar: false,
 		container: '.js-view-container',
@@ -19,7 +19,7 @@ const PreviewImg = (function () {
             <div class="js-close view-close">x</div>
         </div>`;
 
-	function isObject(value) {
+	const isObject = function (value) {
 		return typeof value === 'object' && value !== null;
 	}
 
@@ -78,6 +78,7 @@ const PreviewImg = (function () {
 		},
         initClose: function initClose() {
             let that = this;
+            let timer = null;
             this.$close = this.$wrap.querySelector('.js-close');
             this.$close.onclick = function () {
                 that.close();
@@ -90,7 +91,18 @@ const PreviewImg = (function () {
 
             that.$wrap.ontouchstart = function (event) {
                 event.preventDefault();
-                that.close();
+                event.stopPropagation();
+
+                if (event.touches.length >= 2) {
+                    clearTimeout(timer);
+                    return;
+                }
+
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    that.close();
+                    clearTimeout(timer);
+                }, 250)
             }
         },
 		initCanvas: function initCanvas() {
@@ -102,22 +114,28 @@ const PreviewImg = (function () {
         },
 		initList: function initList() {
             let that = this;
-			[].forEach.call(this.images, function (img) {
-                img.onclick = function (event) {
+			[].forEach.call(this.images, function (item) {
+                item.onclick = function (event) {
                     event.stopPropagation();
                     that.open();
-                    that.$img.src = img.src;
+                    that.$img.src = item.src;
 
-                    let $canvas = that.$img.parentNode;
+                    let imgWidth = that.$img.offsetWidth;
                     let imgHeight = that.$img.offsetHeight;
+                    let naturalWidth = that.$img.naturalWidth;
+                    let naturalHeight = that.$img.naturalHeight;
+                    let sw = window.screen.width;
+                    let wh = window.screen.height;
 
-                    if (imgHeight >= window.screen.height) {
-                        $canvas.classList.add('vertical');
-                        $canvas.classList.remove('horizontal');
+                    if (naturalWidth <= sw && naturalHeight <= wh) {
+                        that.$img.style.width = 'initial';
                     }
-                    else {
-                        $canvas.classList.add('horizontal');
-                        $canvas.classList.remove('vertical');
+                    else if (imgHeight >= imgWidth && imgHeight >= wh) {
+                        that.$img.style.width = 'initial';
+                        that.$img.style.height = `${wh / 1.15}px`;
+                    }
+                    else if (imgWidth >= sw) {
+                        that.$img.style.width = `${sw - 40}px`;
                     }
                 }
 			});
@@ -139,6 +157,8 @@ const PreviewImg = (function () {
                 distanceY: 0,
                 timer: null,
                 isMove: false,
+                isScale: false,
+                scale: 1,
             }
 
             that.$img.onclick = function (event) {
@@ -155,51 +175,69 @@ const PreviewImg = (function () {
             }
 
             that.$img.ontouchstart = function (event) {
-                console.log(handDetail.imgEndX)
-                console.log(handDetail.imgEndY)
-
                 event.preventDefault();
                 event.stopPropagation();
+                clearTimeout(handDetail.timer);
+
+                handDetail.isScale = false;
+                if (event.touches.length >= 2) {
+                    handDetail.isScale = true;
+                    return;
+                }
+
                 handDetail.startX = event.touches[0].pageX;
                 handDetail.startY = event.touches[0].pageY;
                 handDetail.startTime = Date.now();
             }
 
             that.$img.ontouchmove = function (event) {
-                clearTimeout(handDetail.timer);
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (event.touches.length >= 2 || handDetail.isScale) {
+                    // that.$img.style.transform = `translate(${handDetail.imgEndX}px, ${handDetail.imgEndY}px) scale(${handDetail.scale += 0.1})`;
+                    return;
+                }
+
                 handDetail.isMove = true;
                 handDetail.distanceX = event.touches[0].pageX - handDetail.startX;
                 handDetail.distanceY = event.touches[0].pageY - handDetail.startY;
-                that.$img.style.transform = `translate(${handDetail.imgEndX + handDetail.distanceX}px, ${handDetail.imgEndY + handDetail.distanceY}px)`;
+                that.$img.style.transform = `translate(${handDetail.imgEndX + handDetail.distanceX}px, ${handDetail.imgEndY + handDetail.distanceY}px) scale(${handDetail.scale})`;
             }
 
-            that.$img.ontouchend = function () {
+            that.$img.ontouchend = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                clearTimeout(handDetail.timer);
+
+                if (handDetail.isScale) {
+                    return;
+                }
+
                 handDetail.spaceTime = Date.now() - handDetail.endTime;
                 handDetail.endTime = Date.now();
-                clearTimeout(handDetail.timer);
-                handDetail.timer = setTimeout(function () {
-                    that.close();
-                }, 250);
-                
+
                 // 拖动
                 if (handDetail.isMove) {
                     handDetail.imgEndX += handDetail.distanceX;
                     handDetail.imgEndY += handDetail.distanceY;
                     handDetail.isMove = false;
-                    clearTimeout(handDetail.timer);
                 } 
                 // 双击
                 else if (handDetail.spaceTime > 0 && handDetail.spaceTime <= 250) {
-                    clearTimeout(handDetail.timer);
+
                 }
                 // 长按
                 else if (handDetail.endTime - handDetail.startTime >= 250) {
-                    clearTimeout(handDetail.timer);
+
                 }
                 // 单击
                 else {
                     handDetail.imgEndX = 0;
                     handDetail.imgEndY = 0;
+                    handDetail.timer = setTimeout(function () {
+                        that.close();
+                    }, 250);
                 }
             }
 
@@ -216,8 +254,9 @@ const PreviewImg = (function () {
             document.body.classList.remove('view-open');
             this.$wrap.dispatchEvent(this.resetDrag());
             this.$wrap.children[0].classList.add('hide');
+            this.$img.style.width = '100%';
+            this.$img.style.height = 'initial';
             this.$img.style.transform = 'translate(0, 0)';
-            this.$img.parentNode.classList.remove('vertical', 'horizontal');
         },
     }
 
