@@ -12,9 +12,9 @@ const PreviewImg = (function () {
 		`<div class="view-container hide">
             <div class="view-canvas"></div>
             <div class="view-footer">
-                <div class="view-title"><div>
-                <div class="view-tool"><div>
-                <div class="view-navbar"><div>
+                <div class="view-title"></div>
+                <div class="view-tool"></div>
+                <div class="view-navbar"></div>
             </div>
             <div class="js-close view-close">x</div>
         </div>`;
@@ -83,11 +83,13 @@ const PreviewImg = (function () {
                 that.close();
             }
 
-            that.$wrap.onclick = function () {
+            that.$wrap.onclick = function (event) {
+                event.preventDefault();
                 that.close();
             }
 
-            that.$wrap.ontouchstart = function () {
+            that.$wrap.ontouchstart = function (event) {
+                event.preventDefault();
                 that.close();
             }
         },
@@ -105,6 +107,18 @@ const PreviewImg = (function () {
                     event.stopPropagation();
                     that.open();
                     that.$img.src = img.src;
+
+                    let $canvas = that.$img.parentNode;
+                    let imgHeight = that.$img.offsetHeight;
+
+                    if (imgHeight >= window.screen.height) {
+                        $canvas.classList.add('vertical');
+                        $canvas.classList.remove('horizontal');
+                    }
+                    else {
+                        $canvas.classList.add('horizontal');
+                        $canvas.classList.remove('vertical');
+                    }
                 }
 			});
 		},
@@ -141,6 +155,9 @@ const PreviewImg = (function () {
             }
 
             that.$img.ontouchstart = function (event) {
+                console.log(handDetail.imgEndX)
+                console.log(handDetail.imgEndY)
+
                 event.preventDefault();
                 event.stopPropagation();
                 handDetail.startX = event.touches[0].pageX;
@@ -157,33 +174,39 @@ const PreviewImg = (function () {
             }
 
             that.$img.ontouchend = function () {
-                handDetail.imgEndX += handDetail.distanceX;
-                handDetail.imgEndY += handDetail.distanceY;
                 handDetail.spaceTime = Date.now() - handDetail.endTime;
                 handDetail.endTime = Date.now();
                 clearTimeout(handDetail.timer);
                 handDetail.timer = setTimeout(function () {
                     that.close();
                 }, 250);
-
+                
+                // 拖动
                 if (handDetail.isMove) {
+                    handDetail.imgEndX += handDetail.distanceX;
+                    handDetail.imgEndY += handDetail.distanceY;
                     handDetail.isMove = false;
                     clearTimeout(handDetail.timer);
                 } 
-
                 // 双击
-                if (handDetail.spaceTime > 0 && handDetail.spaceTime <= 250) {
+                else if (handDetail.spaceTime > 0 && handDetail.spaceTime <= 250) {
                     clearTimeout(handDetail.timer);
                 }
                 // 长按
                 else if (handDetail.endTime - handDetail.startTime >= 250) {
                     clearTimeout(handDetail.timer);
                 }
+                // 单击
+                else {
+                    handDetail.imgEndX = 0;
+                    handDetail.imgEndY = 0;
+                }
             }
-        },
-        moveTo: function moveTo(event) {
-            handDetail.startX = event.touches[0].pageX;
-            handDetail.startY = event.touches[0].pageY;
+
+            that.$wrap.addEventListener('resetDrag', function () {
+                handDetail.imgEndX = 0;
+                handDetail.imgEndY = 0;
+            });
         },
         open: function open() {
             document.body.classList.add('view-open');
@@ -191,15 +214,23 @@ const PreviewImg = (function () {
         },
         close: function close() {
             document.body.classList.remove('view-open');
+            this.$wrap.dispatchEvent(this.resetDrag());
             this.$wrap.children[0].classList.add('hide');
             this.$img.style.transform = 'translate(0, 0)';
+            this.$img.parentNode.classList.remove('vertical', 'horizontal');
         },
+    }
+
+    const events = {
+        resetDrag: function resetDrag() {
+            return new CustomEvent('resetDrag');
+        }
     }
 
 	Viewer.prototype.debug = function () {
 		console.error('debug');
 	};
 
-	assign(Viewer.prototype, render, methods);
+	assign(Viewer.prototype, render, methods, events);
 	return Viewer;
 })();

@@ -61,6 +61,14 @@
     img {
         width: 100%;
     }
+
+    &.vertical {
+        padding: 0 110px;
+    }
+
+    &.horizontal {
+        padding: 0 20px;
+    }
 }
 
 .view-loading {

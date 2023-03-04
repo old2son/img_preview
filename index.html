@@ -12,25 +12,51 @@
 </head>
 
 <style>
+    html,
+    body {
+        max-width: 768px;
+        height: 100%;
+    }
+
+    #image {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        position: fixed;
+        top: 50%;
+        width: 100%;
+        padding: 8px 0;
+        transform: translateY(-50%);
+    }
+
     #image li {
-        width: 100px;
+        flex: 1;
+        flex-basis: 50%;
+        height: 100px;
+        padding: 8px;
         overflow: hidden;
+        box-sizing: border-box;
     }
 
     #image li img {
         width: 100%;
+        height: 100%;
+        min-height: 100px;
+        border: 1px solid #ddd;
+        border-radius: 2px;
+        object-fit: cover;
         cursor: pointer;
+        user-select:none;
+        -webkit-tap-highlight-color:transparent;
     }
 </style>
 <body>
-    <div>
-        <ul id="image">
-            <li><img src="../images/tibet-1.jpg" alt="tibet-1"></li>
-            <li><img src="../images/tibet-2.jpg" alt="tibet-2"></li>
-            <li><img src="../images/tibet-3.jpg" alt="tibet-3"></li>
-            <li><img src="https://img.familydoctor.com.cn/uploadimg/cbyhys/2022/12/29/14/8c16435e850100001fab71641f760000.jpeg" alt="tibet-4"></li>
-        </ul>
-    </div>
+    <ul id="image">
+        <li><img src="https://img.familydoctor.com.cn/uploadimg/cbyhys/2022/12/29/14/8c16435e850100001fab71641f760000.jpeg"></li>
+        <li><img src="https://img.familydoctor.com.cn/uploadimg/cbyhys/2022/12/29/14/0626415e850100001fab71641f6d0000.jpeg"></li>
+        <li><img src="https://img.familydoctor.com.cn/uploadimg/cbyhys/2022/12/29/14/77fc435e850100001fab71641f770000.jpeg"></li>
+        <li><img src="https://img.familydoctor.com.cn/uploadimg/cbyhys/2023/01/04/15/6a6b717d850100001fab71547c050000.jpeg"></li>
+    </ul>
 
     <!-- <div class="view-container view-loading">
         <div class="view-canvas">
