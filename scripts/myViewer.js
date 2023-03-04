@@ -65,7 +65,6 @@ const PreviewImg = (function () {
 		render: function render() {
 			this.initBody();
 			this.initList();
-            this.initCanvas();
             this.initClose();
 		},
 		initBody: function initBody() {
@@ -106,37 +105,41 @@ const PreviewImg = (function () {
             }
         },
 		initCanvas: function initCanvas() {
-            this.$img = document.createElement('img');
+            this.$img = new Image();
             this.$img.style.transform = 'translate(0, 0)';
             fragment.appendChild(this.$img);
 			this.$wrap.children[0].children[0].appendChild(fragment);
             this.dragorclick();
         },
+        setImgStyle: function setImgStyle() {
+            let that = this;
+            let imgWidth = that.$img.offsetWidth;
+            let imgHeight = that.$img.offsetHeight;
+            let naturalWidth = that.$img.naturalWidth;
+            let naturalHeight = that.$img.naturalHeight;
+            let sw = window.screen.width;
+            let wh = window.screen.height;
+
+            if (naturalWidth <= sw && naturalHeight <= wh) {
+                that.$img.style.width = 'initial';
+            }
+            else if (imgHeight >= imgWidth && imgHeight >= wh) {
+                that.$img.style.width = 'initial';
+                that.$img.style.height = `${wh / 1.15}px`;
+            }
+            else if (imgWidth >= sw) {
+                that.$img.style.width = `${sw - 40}px`;
+            }
+        },
 		initList: function initList() {
             let that = this;
-			[].forEach.call(this.images, function (item) {
-                item.onclick = function (event) {
+			[].forEach.call(this.images, function (image) {
+                console.log(image)
+                image.onclick = function (event) {
                     event.stopPropagation();
                     that.open();
-                    that.$img.src = item.src;
-
-                    let imgWidth = that.$img.offsetWidth;
-                    let imgHeight = that.$img.offsetHeight;
-                    let naturalWidth = that.$img.naturalWidth;
-                    let naturalHeight = that.$img.naturalHeight;
-                    let sw = window.screen.width;
-                    let wh = window.screen.height;
-
-                    if (naturalWidth <= sw && naturalHeight <= wh) {
-                        that.$img.style.width = 'initial';
-                    }
-                    else if (imgHeight >= imgWidth && imgHeight >= wh) {
-                        that.$img.style.width = 'initial';
-                        that.$img.style.height = `${wh / 1.15}px`;
-                    }
-                    else if (imgWidth >= sw) {
-                        that.$img.style.width = `${sw - 40}px`;
-                    }
+                    that.initCanvas();
+                    that.loadImg(image);
                 }
 			});
 		},
@@ -225,7 +228,7 @@ const PreviewImg = (function () {
                 } 
                 // 双击
                 else if (handDetail.spaceTime > 0 && handDetail.spaceTime <= 250) {
-
+                    
                 }
                 // 长按
                 else if (handDetail.endTime - handDetail.startTime >= 250) {
@@ -241,10 +244,20 @@ const PreviewImg = (function () {
                 }
             }
 
-            that.$wrap.addEventListener('resetDrag', function () {
+            const reset = function reset() {
                 handDetail.imgEndX = 0;
                 handDetail.imgEndY = 0;
-            });
+                that.$img.onclick = null;
+                that.$img.ondblclick = null;
+                that.$img.ontouchstart = null;
+                that.$img.ontouchmove = null;
+                that.$img.ontouchend = null;
+                that.$img.onclick = null;
+                that.$img.ondblclick = null;
+                that.$wrap.removeEventListener('resetDrag', reset);
+            }
+
+            that.$wrap.addEventListener('resetDrag', reset);
         },
         open: function open() {
             document.body.classList.add('view-open');
@@ -254,10 +267,24 @@ const PreviewImg = (function () {
             document.body.classList.remove('view-open');
             this.$wrap.dispatchEvent(this.resetDrag());
             this.$wrap.children[0].classList.add('hide');
-            this.$img.style.width = '100%';
-            this.$img.style.height = 'initial';
-            this.$img.style.transform = 'translate(0, 0)';
+            this.$img.onload = null;
+            this.$img.onerror = null;
+            this.$img.src = '';
+            this.$img.remove();
+            this.$img = null;
         },
+        loadImg: function loadImg(image) {
+            let that = this;
+            that.$img.src = image.src;
+            that.$img.parentNode.classList.add('view-loading');
+            that.$img.onload = function () {
+                that.setImgStyle();
+                that.$img.parentNode.classList.remove('view-loading');
+            }
+            that.$img.onerror = function () {
+                throw Error(image.src + '加载失败');
+            }
+        }
     }
 
     const events = {

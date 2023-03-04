@@ -10,7 +10,7 @@
 </head>
 <style>
     html,
-    body {max-width: 768px;height: 100%;}
+    body {max-width: 768px;height: 100%;margin: 0;}
     .hide {display: none;}
     #image {display: flex;flex-wrap: wrap;justify-content: space-between;position: fixed;top: 50%;width: 100%;padding: 8px 0;transform: translateY(-50%);}
     #image li {flex: 1;flex-basis: 50%;height: 100px;padding: 8px;margin-bottom: 8px;box-sizing: border-box;list-style: none;}
@@ -34,9 +34,12 @@
 </script>
 <script>
     // VConsole will be exported to `window.VConsole` by default.
-    var vConsole = new window.VConsole();
-    const Preview = new PreviewImg({
-        element: '#image',
-    });
+    // var vConsole = new window.VConsole();
+    window.onload = function () {
+        const Preview = new PreviewImg({
+            element: '#image',
+        });
+    }
+    
 </script>
 </html>

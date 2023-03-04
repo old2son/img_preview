@@ -9,7 +9,7 @@
 	user-select: none;
 	transition: all 0.3s;
 	-webkit-tap-highlight-color: transparent;
-	background-color: rgba(0, 0, 0, 50%);
+	background-color: rgba(0, 0, 0, 0.9);
 }
 .view-in {
 	opacity: 1;
@@ -64,6 +64,8 @@
 }
 
 .view-loading {
+    position: relative;
+
 	&::after {
 		display: inline-block;
 		position: absolute;
