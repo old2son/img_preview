@@ -55,10 +55,7 @@ const PreviewImg = (function () {
 		this.$wrap,
         this.$img,
         this.$close = null;
-
 		this.render();
-		console.log(this.options);
-		console.log('====end====');
 	};
 
 	const render = {
@@ -134,7 +131,6 @@ const PreviewImg = (function () {
 		initList: function initList() {
             let that = this;
 			[].forEach.call(this.images, function (image) {
-                console.log(image)
                 image.onclick = function (event) {
                     event.stopPropagation();
                     that.open();
@@ -160,6 +156,7 @@ const PreviewImg = (function () {
                 distanceY: 0,
                 timer: null,
                 isMove: false,
+                scaleDistance: 0,
                 isScale: false,
                 scale: 1,
             }
@@ -184,6 +181,9 @@ const PreviewImg = (function () {
 
                 handDetail.isScale = false;
                 if (event.touches.length >= 2) {
+                    let moveX = event.touches[1].clientX - event.touches[0].clientX;
+                    let moveY = event.touches[1].clientY - event.touches[0].clientY;
+                    handDetail.distance = Math.sqrt(moveX * moveX + moveY * moveY);
                     handDetail.isScale = true;
                     return;
                 }
@@ -197,15 +197,28 @@ const PreviewImg = (function () {
                 event.preventDefault();
                 event.stopPropagation();
 
-                if (event.touches.length >= 2 || handDetail.isScale) {
-                    // that.$img.style.transform = `translate(${handDetail.imgEndX}px, ${handDetail.imgEndY}px) scale(${handDetail.scale += 0.1})`;
+                if (event.touches.length >= 2 && handDetail.isScale) {
+                    let moveX = event.touches[1].clientX - event.touches[0].clientX;
+                    let moveY = event.touches[1].clientY - event.touches[0].clientY;
+                    let distance = Math.sqrt(moveX * moveX + moveY * moveY);
+                    let distanceDiff = distance - handDetail.distance;
+                    handDetail.distance = distance;
+                    handDetail.scale = handDetail.scale + 0.005 * distanceDiff;
+                    that.$img.style.transformOrigin = `${originX}px ${originY}px`;
+                    that.$img.style.transform = `translate(${handDetail.imgEndX}px, ${handDetail.imgEndY}px) scale(${handDetail.scale})`;
+                    return;
+                }
+                // 防止双指离开触发单指移动
+                else if (handDetail.isScale) {
                     return;
                 }
 
-                handDetail.isMove = true;
                 handDetail.distanceX = event.touches[0].pageX - handDetail.startX;
                 handDetail.distanceY = event.touches[0].pageY - handDetail.startY;
                 that.$img.style.transform = `translate(${handDetail.imgEndX + handDetail.distanceX}px, ${handDetail.imgEndY + handDetail.distanceY}px) scale(${handDetail.scale})`;
+                if (Math.abs(handDetail.distanceX) >= 2 || Math.abs(handDetail.distanceX >= 2)) {
+                    handDetail.isMove = true;
+                }
             }
 
             that.$img.ontouchend = function (event) {
@@ -228,7 +241,7 @@ const PreviewImg = (function () {
                 } 
                 // 双击
                 else if (handDetail.spaceTime > 0 && handDetail.spaceTime <= 250) {
-                    
+
                 }
                 // 长按
                 else if (handDetail.endTime - handDetail.startTime >= 250) {
@@ -236,8 +249,6 @@ const PreviewImg = (function () {
                 }
                 // 单击
                 else {
-                    handDetail.imgEndX = 0;
-                    handDetail.imgEndY = 0;
                     handDetail.timer = setTimeout(function () {
                         that.close();
                     }, 250);
@@ -247,6 +258,7 @@ const PreviewImg = (function () {
             const reset = function reset() {
                 handDetail.imgEndX = 0;
                 handDetail.imgEndY = 0;
+                handDetail.isScale = false;
                 that.$img.onclick = null;
                 that.$img.ondblclick = null;
                 that.$img.ontouchstart = null;
@@ -265,8 +277,8 @@ const PreviewImg = (function () {
         },
         close: function close() {
             document.body.classList.remove('view-open');
-            this.$wrap.dispatchEvent(this.resetDrag());
             this.$wrap.children[0].classList.add('hide');
+            this.$wrap.dispatchEvent(this.resetDrag());
             this.$img.onload = null;
             this.$img.onerror = null;
             this.$img.src = '';
