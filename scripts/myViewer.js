@@ -204,7 +204,6 @@ const PreviewImg = (function () {
                     let distanceDiff = distance - handDetail.distance;
                     handDetail.distance = distance;
                     handDetail.scale = handDetail.scale + 0.005 * distanceDiff;
-                    that.$img.style.transformOrigin = `${originX}px ${originY}px`;
                     that.$img.style.transform = `translate(${handDetail.imgEndX}px, ${handDetail.imgEndY}px) scale(${handDetail.scale})`;
                     return;
                 }
